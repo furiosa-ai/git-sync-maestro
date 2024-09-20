@@ -2,17 +2,35 @@ import os
 import shutil
 
 from git import Repo
+from git_sync_maestro.plugin import BasePlugin, register_plugin
 
 
-def sync_file(repo1: Repo, repo2: Repo, src_file: str, dst_file: str):
-    """두 저장소 간에 특정 파일을 동기화합니다."""
-    src_path = os.path.join(repo1.working_dir, src_file)
-    dst_path = os.path.join(repo2.working_dir, dst_file)
+@register_plugin("file_sync")
+class FileSyncPlugin(BasePlugin):
+    def validate_config(self, config):
+        required_keys = ['src', 'dst']
+        for key in required_keys:
+            if key not in config:
+                raise ValueError(f"Missing required configuration key: {key}")
 
-    if not os.path.exists(src_path):
-        print(f"경고: 소스 파일을 찾을 수 없음: {src_path}")
-        return
+    def do_action(self, **kwargs):
+        src = kwargs['src']
+        dst = kwargs['dst']
 
-    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-    shutil.copy2(src_path, dst_path)
-    print(f"파일 동기화: {src_file} -> {dst_file}")
+        repo = self.context.get_resource('src_repo')
+
+        # Perform file synchronization
+        src_path = src
+        dst_path = dst
+
+        if not os.path.exists(src_path):
+            raise FileNotFoundError(f"Source file not found: {src_path}")
+
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+        shutil.copy2(src_path, dst_path)
+
+        # Commit
+        repo.git.add(dst)
+        repo.index.commit(f"Sync file from {src} to {dst}")
+
+        print(f"File synced from {src} to {dst} in repository")

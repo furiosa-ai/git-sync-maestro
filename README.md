@@ -1,14 +1,14 @@
 # Git Sync Maestro
 
-Git Sync Maestro is a powerful Python tool designed for efficient file and directory synchronization between multiple Git repositories. This project is maintained by Furiosa.ai.
+Git Sync Maestro is a powerful tool designed for efficient file and directory synchronization between multiple Git repositories. This project is maintained by Furiosa.ai.
 
 ## Key Features
 
-- Synchronize files and directories across multiple Git repositories
-- Support for glob patterns for fine-grained file selection
-- File exclusion capabilities
-- Custom command execution before and after synchronization
-- Easy configuration using YAML
+- Plugin-based architecture for flexible and extensible synchronization tasks
+- Built-in plugins for common operations (e.g., repo sync, file sync)
+- YAML-based configuration for easy orchestration of multiple synchronization actions
+- Makefile-style environment variable support with default values
+- Easy creation and integration of custom plugins
 
 ## Installation
 
@@ -28,25 +28,35 @@ pip install -e .
 
 ## Usage
 
-1. Create a YAML configuration file. Note that all paths in the YAML file are relative to the root of the cloned project:
+1. Create a YAML configuration file. This file orchestrates the execution of various plugins:
 
 ```yaml
+env:
+  GITHUB_TOKEN: ${GITHUB_TOKEN:-default_token}
+  API_KEY: ${API_KEY:-default_key}
+  DEBUG_MODE: ${DEBUG_MODE:-false}
+
 syncs:
-  - repo1: "https://github.com/user/repo1.git"
-    repo2: "https://github.com/user/repo2.git"
-    pre: "echo 'Starting sync' && git checkout main"
-    directories:
-      - src: "src"
-        dst: "dest/src"
-        glob_pattern: "*.py"
-        exclude_pattern: "test_*.py"
-    files:
-      - src: "config.toml"
-        dst: "config/config.toml"
-    post: "echo 'Sync completed' && npm run build"
+  - repo:
+      src: "https://${GITHUB_TOKEN}@github.com/user/repo1.git"
+      dst: "https://${GITHUB_TOKEN}@github.com/user/repo2.git"
+      src_branch: main
+      dst_branch: sync
+  - file:
+      src: "config.toml"
+      dst: "config/config.toml"
+      repo: "https://${GITHUB_TOKEN}@github.com/user/repo2.git"
 ```
 
-2. Run the synchronization:
+2. (Optional) Set your environment variables:
+
+```bash
+export GITHUB_TOKEN=your_github_token
+export API_KEY=your_api_key
+export DEBUG_MODE=true
+```
+
+3. Run the synchronization:
 
 ```bash
 python -m git_sync_maestro path/to/your/config.yaml
@@ -54,64 +64,109 @@ python -m git_sync_maestro path/to/your/config.yaml
 
 ## Configuration Options
 
-All paths in the configuration are relative to the root of the cloned project.
+- `env`: Dictionary of environment variables with default values
+  - `KEY: ${ENVIRONMENT_VARIABLE:-default_value}`
+- `syncs`: List of synchronization actions to perform
+  - Each action specifies a plugin to use and its parameters
 
-- `repo1`, `repo2`: URLs of source and target Git repositories
-- `pre`: Command to execute before synchronization (executed in the root of the cloned project)
-- `directories`: List of directories to synchronize
-  - `src`: Source directory path (relative to the root of repo1)
-  - `dst`: Target directory path (relative to the root of repo2)
-  - `glob_pattern`: Pattern for files to include
-  - `exclude_pattern`: Pattern for files to exclude
-- `files`: List of individual files to synchronize
-  - `src`: Source file path (relative to the root of repo1)
-  - `dst`: Target file path (relative to the root of repo2)
-- `post`: Command to execute after synchronization (executed in the root of the cloned project)
+## Built-in Plugins
 
-## Example
+### repo
+Synchronizes two Git repositories.
+Parameters:
+- `src`: Source repository URL
+- `dst`: Destination repository URL
+- `src_branch`: Source branch (optional, default: main)
+- `dst_branch`: Destination branch (optional, default: main)
 
-Let's say you have the following structure in your source repository (repo1):
+### file
+Synchronizes a single file between repositories.
+Parameters:
+- `src`: Source file path
+- `dst`: Destination file path
+- `repo`: Repository URL
 
+## Creating Custom Plugins
+
+To create a custom plugin for Git Sync Maestro:
+
+1. Create a new Python file in the `plugins` directory (e.g., `custom_sync.py`).
+2. Define a class that inherits from `BasePlugin`.
+3. Implement the `sync` method.
+4. Use the `@register_plugin` decorator to register your plugin.
+
+Here's an example of a custom plugin:
+
+```python
+from git_sync_maestro.plugin import BasePlugin, register_plugin
+
+@register_plugin("custom_sync")
+class CustomSyncPlugin(BasePlugin):
+    def sync(self, **kwargs):
+        # Your custom synchronization logic here
+        src = kwargs.get('src')
+        dst = kwargs.get('dst')
+        print(f"Performing custom sync from {src} to {dst}")
+        # Implement your sync logic
 ```
-/
-├── src/
-│   ├── main.py
-│   └── utils.py
-├── config.toml
-└── README.md
-```
 
-And you want to synchronize it with a target repository (repo2) with a different structure:
+## Using Custom Plugins
 
-```
-/
-├── dest/
-│   └── src/
-├── config/
-└── docs/
-```
-
-Your configuration might look like this:
+Once you've created a custom plugin, you can use it in your YAML configuration file:
 
 ```yaml
 syncs:
-  - repo1: "https://github.com/user/source-repo.git"
-    repo2: "https://github.com/user/target-repo.git"
-    directories:
-      - src: "src"
-        dst: "dest/src"
-        glob_pattern: "*.py"
-    files:
-      - src: "config.toml"
-        dst: "config/config.toml"
-      - src: "README.md"
-        dst: "docs/README.md"
+  - custom_sync:
+      src: "/path/to/source"
+      dst: "/path/to/destination"
+      custom_param: "value"
 ```
 
-This configuration will:
-1. Synchronize all .py files from the `src` directory in repo1 to the `dest/src` directory in repo2.
-2. Copy `config.toml` from the root of repo1 to the `config` directory in repo2.
-3. Copy `README.md` from the root of repo1 to the `docs` directory in repo2.
+## Environment Variables
+
+Environment variables in Git Sync Maestro are handled in a Makefile-like manner. You can specify default values in the configuration file, which will be used if the corresponding environment variable is not set.
+
+The syntax for specifying an environment variable with a default value is:
+
+```yaml
+KEY: ${ENVIRONMENT_VARIABLE:-default_value}
+```
+
+This approach allows you to:
+- Provide default values for all required variables
+- Override these defaults by setting environment variables when needed
+- Keep sensitive information out of your configuration files
+
+## Example
+
+Here's a comprehensive example using multiple plugins, including a custom one:
+
+```yaml
+env:
+  GITHUB_TOKEN: ${GITHUB_TOKEN:-default_token}
+  API_KEY: ${API_KEY:-default_key}
+  DEBUG_MODE: ${DEBUG_MODE:-false}
+
+syncs:
+  - repo:
+      src: "https://${GITHUB_TOKEN}@github.com/user/source-repo.git"
+      dst: "https://${GITHUB_TOKEN}@github.com/user/target-repo.git"
+      src_branch: develop
+      dst_branch: sync-branch
+  - file:
+      src: "config.toml"
+      dst: "config/production-config.toml"
+      repo: "https://${GITHUB_TOKEN}@github.com/user/target-repo.git"
+  - custom_sync:
+      src: "/path/to/source"
+      dst: "/path/to/destination"
+      custom_param: "value"
+```
+
+This configuration demonstrates:
+1. Using the `repo` plugin to synchronize entire repositories
+2. Using the `file` plugin to sync a specific file
+3. Using a custom `custom_sync` plugin, showing the extensibility of the system
 
 ## Contributing
 
