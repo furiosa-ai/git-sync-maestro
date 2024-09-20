@@ -1,11 +1,10 @@
 import importlib
-import os
 import sys
 
 import yaml
 
 from .context import Context
-from .plugin import PluginRegistry
+from .core import PluginRegistry
 
 
 def load_config(config_file):
@@ -39,7 +38,7 @@ def main(config_file):
                     plugin.validate_config(plugin_config)
                     plugin.do_action(**plugin_config)
                 except Exception as e:
-                    print(f"Error in plugin {plugin_name}: {str(e)}")
+                    print(f"[{plugin_name}] Error: {str(e)}")
 
 
 if __name__ == "__main__":

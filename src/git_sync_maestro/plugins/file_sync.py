@@ -2,7 +2,8 @@ import os
 import shutil
 
 from git import Repo
-from git_sync_maestro.plugin import BasePlugin, register_plugin
+
+from ..core import BasePlugin, register_plugin
 
 
 @register_plugin("file_sync")
@@ -17,7 +18,7 @@ class FileSyncPlugin(BasePlugin):
         src = kwargs['src']
         dst = kwargs['dst']
 
-        repo = self.context.get_resource('src_repo')
+        repo = Repo(self.context.get_resource('src_repo'))
 
         # Perform file synchronization
         src_path = src

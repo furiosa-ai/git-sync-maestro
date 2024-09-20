@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 
 from ..context import Context
 
@@ -16,6 +17,9 @@ class BasePlugin(ABC):
         :param kwargs: Keyword arguments specific to the plugin
         """
         pass
+
+    def resolve_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: self.context.resolve_value(v) for k, v in config.items()}
 
     def validate_config(self, config):
         """
