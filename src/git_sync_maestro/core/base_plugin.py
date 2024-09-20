@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import Any, Dict
 
 from ..context import Context
@@ -7,6 +8,7 @@ from ..context import Context
 class BasePlugin(ABC):
     def __init__(self, context: Context):
         self.context = context
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
     def do_action(self, context: Context, **kwargs):
@@ -29,7 +31,6 @@ class BasePlugin(ABC):
         :param config: Configuration dictionary for the plugin
         :raises ValueError: If the configuration is invalid
         """
-        pass
 
     def pre_action(self, **kwargs):
         """

@@ -18,8 +18,6 @@ class FileSyncPlugin(BasePlugin):
         src = kwargs['src']
         dst = kwargs['dst']
 
-        repo = Repo(self.context.get_resource('src_repo'))
-
         # Perform file synchronization
         src_path = src
         dst_path = dst
@@ -31,6 +29,7 @@ class FileSyncPlugin(BasePlugin):
         shutil.copy2(src_path, dst_path)
 
         # Commit
+        repo = Repo(self.context.get_resource('dst_resource'))
         repo.git.add(dst)
         repo.index.commit(f"Sync file from {src} to {dst}")
 
