@@ -15,12 +15,16 @@ class FileSyncPlugin(BasePlugin):
                 raise ValueError(f"Missing required configuration key: {key}")
 
     def do_action(self, **kwargs):
-        src = kwargs['src']
-        dst = kwargs['dst']
+        resolved_kwargs = self.resolve_config(kwargs)
+        src = resolved_kwargs['src']
+        dst = resolved_kwargs['dst']
+        src_root_path = resolved_kwargs['src_resource']['path']
+        dst_root_path = resolved_kwargs['dst_resource']['path']
+        dst_repo = resolved_kwargs['dst_resource']['repo']
 
         # Perform file synchronization
-        src_path = src
-        dst_path = dst
+        src_path = os.path.join(src_root_path, src)
+        dst_path = os.path.join(dst_root_path, dst)
 
         if not os.path.exists(src_path):
             raise FileNotFoundError(f"Source file not found: {src_path}")
@@ -29,8 +33,8 @@ class FileSyncPlugin(BasePlugin):
         shutil.copy2(src_path, dst_path)
 
         # Commit
-        repo = Repo(self.context.get_resource('dst_resource'))
-        repo.git.add(dst)
-        repo.index.commit(f"Sync file from {src} to {dst}")
+        with dst_repo.git.custom_environment(GIT_WORK_TREE=dst_repo.working_dir):
+            dst_repo.git.add(dst)
+            dst_repo.index.commit(f"Sync file from {src} to {dst}")
 
-        print(f"File synced from {src} to {dst} in repository")
+        self.logger.info(f"File synced from {src_path} to {dst_path}")

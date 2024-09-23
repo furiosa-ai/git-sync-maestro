@@ -8,7 +8,7 @@ from yaml.loader import SafeLoader
 from .context import Context
 from .core import PluginRegistry
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -54,10 +54,11 @@ def main(config_file):
             try:
                 plugin_class = PluginRegistry.get(action_type)
                 if plugin_class:
+                    breakpoint()
                     plugin = plugin_class(context)
                     resolved_config = plugin.resolve_config(action_config)
                     plugin.validate_config(resolved_config)
-                    plugin.do_action(**resolved_config)
+                    plugin.run(**resolved_config)
                 else:
                     logger.error(
                         f"{action_name} (line {action_line}): Plugin '{action_type}' not found"
@@ -65,7 +66,7 @@ def main(config_file):
             except Exception as e:
                 logger.exception(f"Error in {action_name} (line {action_line}): {str(e)}")
                 # Optionally, you can choose to exit here if you want to stop on first error
-                # sys.exit(1)
+                sys.exit(1)
             logger.info(f"Completed {action_name} (line {action_line})")
 
 

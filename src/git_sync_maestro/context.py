@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from typing import Any, Dict
@@ -6,9 +7,10 @@ from typing import Any, Dict
 class Context:
     def __init__(self, config: Dict[str, Any]):
         self._config = config
-        self._env = {}
-        self._resources = {}
+        self._env: Dict[str, str] = {}
+        self._resources: Dict[str, Any] = {}
         self._process_env_vars()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def __enter__(self):
         return self
@@ -43,18 +45,17 @@ class Context:
             value = re.sub(r'\$\{([^}]+)\}', lambda m: self.get_env(m.group(1), m.group(0)), value)
 
             # Resolve context variables
-            value = re.sub(
-                r'\$context\.([^}\s]+)',
-                lambda m: str(self.get_resource(m.group(1), m.group(0))),
-                value,
-            )
+            m = re.match(r'\$context\.([^}\s]+)', value)
+            if m:
+                value = self.get_resource(m.group(1), m.group(0))
 
+        self.logger.debug(f"resolve_value: {value} => {value}")
         return value
 
     def get_config(self, key: str, default=None):
         return self._config.get(key, default)
 
-    def get_env(self, key: str, default=None):
+    def get_env(self, key: str, default=None) -> str:
         return self._env.get(key, default)
 
     def set_resource(self, key: str, value: Any):

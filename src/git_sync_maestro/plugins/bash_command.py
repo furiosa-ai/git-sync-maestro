@@ -9,13 +9,21 @@ from ..core import BasePlugin, register_plugin
 @register_plugin("sh")
 class BashCommandPlugin(BasePlugin):
     def validate_config(self, config):
-        if 'command' not in config:
-            raise ValueError("Missing required configuration key: 'command'")
+        if isinstance(config, dict):
+            if self.get_plugin_param_key() not in config:
+                raise ValueError(
+                    f"Missing required configuration key: '{self.get_plugin_param_key()}'"
+                )
+        else:
+            raise ValueError("Invalid configuration type for sh plugin")
+
+    def get_plugin_param_key(self) -> str:
+        return "command"
 
     def do_action(self, **kwargs):
-        resolved_kwargs = self.resolve_config(kwargs)
-        command = resolved_kwargs['command']
-        working_dir = resolved_kwargs.get('working_dir', os.getcwd())
+        command = kwargs[self.get_plugin_param_key()]
+        working_dir = kwargs.get('working_dir', os.getcwd())
+
         env = os.environ.copy()
 
         # Add context variables to environment
@@ -23,8 +31,8 @@ class BashCommandPlugin(BasePlugin):
             if isinstance(value, dict) and 'path' in value:
                 env[f"CONTEXT_{key.upper()}_PATH"] = value['path']
 
-        print(f"Executing command: {command}")
-        print(f"Working directory: {working_dir}")
+        self.logger.info(f"Executing command: {command}")
+        self.logger.info(f"Working directory: {working_dir}")
 
         try:
             result = subprocess.run(
@@ -37,20 +45,20 @@ class BashCommandPlugin(BasePlugin):
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
             )
-            print("Command output:")
-            print(result.stdout)
+            self.logger.debug("Command output:")
+            self.logger.debug(result.stdout)
             if result.stderr:
-                print("Command error output:")
-                print(result.stderr)
+                self.logger.warning("Command error output:")
+                self.logger.warning(result.stderr)
 
             # Optionally, you can store the output in the context for later use
             self.context.set_resource('last_command_output', result.stdout)
 
         except subprocess.CalledProcessError as e:
-            print(f"Command failed with exit code {e.returncode}")
-            print("Command output:")
-            print(e.output)
+            self.logger.error(f"Command failed with exit code {e.returncode}")
+            self.logger.error("Command output:")
+            self.logger.error(e.output)
             if e.stderr:
-                print("Command error output:")
-                print(e.stderr)
+                self.logger.error("Command error output:")
+                self.logger.error(e.stderr)
             raise
