@@ -1,6 +1,6 @@
 from typing import Dict, Type
 
-from .base_plugin import BasePlugin
+from ..interface.base_plugin import BasePlugin
 
 
 class PluginRegistry:

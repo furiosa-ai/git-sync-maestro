@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 import logging
 from typing import Any, Dict, Union
 
-from ..context import Context
+from .context import BaseContext, ContextManager
 
 
 class BasePlugin(ABC):
-    def __init__(self, context: Context):
+    def __init__(self, context: BaseContext):
         self.context = context
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -43,28 +43,23 @@ class BasePlugin(ABC):
         if not isinstance(hooks, list):
             hooks = [hooks]
 
-        for hook in hooks:
-            if isinstance(hook, str):
-                # It's a shell command
-                self.execute_shell_command(hook)
-            elif isinstance(hook, dict):
-                # It's a plugin call
-                plugin_name, plugin_config = next(iter(hook.items()))
-                self.call_plugin(plugin_name, plugin_config)
+        for index, hook in enumerate(hooks, start=1):
+            plugin_name, plugin_config = next(iter(hook.items()))
+            with ContextManager(self.context) as context:
+                hook_name = hook.get('name', f'Hook-{index}')
+                hook_line = hook.get('__line__', 'Unknown')
+                context.set_action_info(hook_name, hook_line)
+                context.plugin_executor(plugin_name, plugin_config, hook_name, hook_line)
 
-    def execute_shell_command(self, command: str):
-        # Implementation of shell command execution (similar to previous example)
-        pass
-
-    def call_plugin(self, plugin_name: str, plugin_config: Dict[str, Any]):
-        plugin_class = self.context.get_plugin(plugin_name)
-        if plugin_class:
-            plugin = plugin_class(self.context)
-            resolved_config = plugin.resolve_config(plugin_config)
-            plugin.validate_config(resolved_config)
-            plugin.do_action(**resolved_config)
-        else:
-            self.logger.error(f"Plugin '{plugin_name}' not found")
+    # def call_plugin(self, plugin_name: str, plugin_config: Dict[str, Any]):
+    #    plugin_class = self.context.get_plugin(plugin_name)
+    #    if plugin_class:
+    #        plugin = plugin_class(self.context)
+    #        resolved_config = plugin.resolve_config(plugin_config)
+    #        plugin.validate_config(resolved_config)
+    #        plugin.do_action(**resolved_config)
+    #    else:
+    #        self.logger.error(f"Plugin '{plugin_name}' not found")
 
     def run(self, **config: Dict[str, Any]):
         self.execute_hooks('pre', config)

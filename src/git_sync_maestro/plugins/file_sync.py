@@ -15,12 +15,11 @@ class FileSyncPlugin(BasePlugin):
                 raise ValueError(f"Missing required configuration key: {key}")
 
     def do_action(self, **kwargs):
-        resolved_kwargs = self.resolve_config(kwargs)
-        src = resolved_kwargs['src']
-        dst = resolved_kwargs['dst']
-        src_root_path = resolved_kwargs['src_resource']['path']
-        dst_root_path = resolved_kwargs['dst_resource']['path']
-        dst_repo = resolved_kwargs['dst_resource']['repo']
+        src = kwargs['src']
+        dst = kwargs['dst']
+        src_root_path = kwargs['src_resource']['path']
+        dst_root_path = kwargs['dst_resource']['path']
+        dst_repo = kwargs['dst_resource']['repo']
 
         # Perform file synchronization
         src_path = os.path.join(src_root_path, src)

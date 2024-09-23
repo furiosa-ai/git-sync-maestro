@@ -5,8 +5,10 @@ import sys
 import yaml
 from yaml.loader import SafeLoader
 
-from .context import Context
-from .core import PluginRegistry
+from .core.plugin_context import PluginContext
+from .core.plugin_executor import PluginExecutor
+from .exceptions import PluginExecutionError
+from .interface.context import ContextManager
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -42,29 +44,24 @@ def main(config_file):
 
     load_plugins(config.get('plugins', []))
 
-    with Context(config) as context:
+    with ContextManager(PluginContext(config)) as context:
+        plugin_executor = PluginExecutor(context)
         for index, action in enumerate(config.get('body', []), start=1):
             action_name = action.get('name', f"Action-{index}")
             action_line = action.get('__line__', 'Unknown')
+
             action_type, action_config = next(iter(action.items()))
-            if action_type == 'name':
-                action_type, action_config = next(iter(action_config.items()))
+            context.set_action_info(action_name, action_line)
 
             logger.info(f"Executing {action_name} (line {action_line}): {action_type}")
             try:
-                plugin_class = PluginRegistry.get(action_type)
-                if plugin_class:
-                    breakpoint()
-                    plugin = plugin_class(context)
-                    resolved_config = plugin.resolve_config(action_config)
-                    plugin.validate_config(resolved_config)
-                    plugin.run(**resolved_config)
-                else:
-                    logger.error(
-                        f"{action_name} (line {action_line}): Plugin '{action_type}' not found"
-                    )
-            except Exception as e:
-                logger.exception(f"Error in {action_name} (line {action_line}): {str(e)}")
+                logger.info(f"Executing {action_name} (line {action_line}): {action_type}")
+                plugin_executor(action_type, action_config, action_name, action_line)
+                logger.info(f"Completed {action_name} (line {action_line})")
+            except PluginExecutionError as e:
+                logger.exception(
+                    f"Error in {e.action_name} (line {e.action_line}): {str(e.original_error)}"
+                )
                 # Optionally, you can choose to exit here if you want to stop on first error
                 sys.exit(1)
             logger.info(f"Completed {action_name} (line {action_line})")
