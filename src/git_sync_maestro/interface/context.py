@@ -11,6 +11,7 @@ class BaseContext:
         self._process_env_vars()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.parent = parent
+        self._action_args: Dict[str, Any] = {}
         self.action_name: Optional[str] = None
         self.action_line: Optional[int] = None
         if parent is None:
@@ -64,23 +65,47 @@ class BaseContext:
         else:
             return value
 
-    def _resolve_string(self, value: str) -> str:
+    def _value_to_string(self, value: Any) -> str:
+        if isinstance(value, (str, int, float, bool)):
+            return str(value)
+        elif isinstance(value, (list, tuple)):
+            return '[' + ', '.join(self._value_to_string(item) for item in value) + ']'
+        elif isinstance(value, dict):
+            return (
+                '{' + ', '.join(f"{k}: {self._value_to_string(v)}" for k, v in value.items()) + '}'
+            )
+        else:
+            return repr(value)
+
+    def _resolve_string(self, value: str) -> Any:
         old_value = value
 
-        # Resolve environment variables
-        value = re.sub(
-            r'\$\[([^]\s]+)\]', lambda m: self.get_env(m.group(1), default=m.group(0)), value
-        )
+        # Check if the entire string is a single resource variable
+        single_resource_match = re.match(r'^\$\[resources\.([^\]]+)\]$', value)
+        if single_resource_match:
+            return self.get_resource(single_resource_match.group(1), value)
 
-        # Resolve context variables
-        match = re.match(r'\$\[context\.([^]\s]+)\]', value)
-        if match:
-            value = self.get_resource(match.group(1), match.group(0))
+        single_action_match = re.match(r'^\$\[action\.([^\]]+)\]$', value)
+        if single_action_match:
+            return self._action_args(single_resource_match.group(1), value)
 
-        if value != old_value:
-            self.logger.debug(f"Resolved string: '{old_value}' => '{value}'")
+        def resolve_var(match):
+            var = match.group(1)
+            if var.startswith('resources.'):
+                resource_value = self.get_resource(var[10:], match.group(0))
+                return self._value_to_string(resource_value)
+            elif var.startswith('action.'):
+                return str(self._action_args.get(var[7:], match.group(0)))
+            else:
+                return str(self.get_env(var, match.group(0)))
 
-        return value
+        # Resolve all variables in the string
+        resolved_value = re.sub(r'\$\[([^\]]+)\]', resolve_var, value)
+
+        if resolved_value != old_value:
+            self.logger.debug(f"Resolved string: '{old_value}' => '{resolved_value}'")
+
+        return resolved_value
 
     def _resolve_dict(self, value: Dict[Any, Any]) -> Dict[Any, Any]:
         resolved_dict = {}
@@ -119,6 +144,9 @@ class BaseContext:
     def set_resource(self, key: str, value: Any):
         root = self.get_root()
         root._resources[key] = value
+
+    def set_action_args(self, args: Dict[str, Any]):
+        self._action_args = args
 
     def set_action_info(self, name: str, line: int):
         self.action_name = name

@@ -49,17 +49,7 @@ class BasePlugin(ABC):
                 hook_name = hook.get('name', f'Hook-{index}')
                 hook_line = hook.get('__line__', 'Unknown')
                 context.set_action_info(hook_name, hook_line)
-                context.plugin_executor(plugin_name, plugin_config, hook_name, hook_line)
-
-    # def call_plugin(self, plugin_name: str, plugin_config: Dict[str, Any]):
-    #    plugin_class = self.context.get_plugin(plugin_name)
-    #    if plugin_class:
-    #        plugin = plugin_class(self.context)
-    #        resolved_config = plugin.resolve_config(plugin_config)
-    #        plugin.validate_config(resolved_config)
-    #        plugin.do_action(**resolved_config)
-    #    else:
-    #        self.logger.error(f"Plugin '{plugin_name}' not found")
+                context.plugin_executor(plugin_name, plugin_config)
 
     def run(self, **config: Dict[str, Any]):
         self.execute_hooks('pre', config)

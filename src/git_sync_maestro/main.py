@@ -56,7 +56,7 @@ def main(config_file):
             logger.info(f"Executing {action_name} (line {action_line}): {action_type}")
             try:
                 logger.info(f"Executing {action_name} (line {action_line}): {action_type}")
-                plugin_executor(action_type, action_config, action_name, action_line)
+                plugin_executor(action_type, action_config)
                 logger.info(f"Completed {action_name} (line {action_line})")
             except PluginExecutionError as e:
                 logger.exception(

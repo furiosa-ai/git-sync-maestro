@@ -1,8 +1,6 @@
 import os
 import shutil
 
-from git import Repo
-
 from ..core import BasePlugin, register_plugin
 
 
