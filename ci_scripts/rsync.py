@@ -14,7 +14,7 @@ def run_rsync_with_filters(
     :param include_patterns: List of patterns to include
     :param exclude_patterns: List of patterns to exclude
     """
-    rsync_command = ["rsync", "-av"]
+    rsync_command = ["rsync", "-avv"]
 
     # Add black filter patterns (exclude)
     for pattern in exclude_patterns:
@@ -30,6 +30,7 @@ def run_rsync_with_filters(
 
     # Add source and destination
     rsync_command.extend([source, destination])
+    print("Executing rsync command:", " ".join(rsync_command))
 
     # Run the rsync command
     try:
@@ -42,15 +43,13 @@ def run_rsync_with_filters(
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Run rsync with filter patterns")
+    parser = argparse.ArgumentParser(
+        description="Run rsync with include and exclude filter patterns"
+    )
     parser.add_argument("source", help="Source directory or file")
     parser.add_argument("destination", help="Destination directory")
-    parser.add_argument(
-        "--include", nargs="*", default=[], help="Include filter patterns (include)"
-    )
-    parser.add_argument(
-        "--exclude", nargs="*", default=[], help="Exclude filter patterns (exclude)"
-    )
+    parser.add_argument("--include", action='append', default=[], help="Include filter patterns")
+    parser.add_argument("--exclude", action='append', default=[], help="Exclude filter patterns")
     return parser.parse_args()
 
 
