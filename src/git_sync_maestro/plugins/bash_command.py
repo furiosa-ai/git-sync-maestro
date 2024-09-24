@@ -1,12 +1,10 @@
 # src/git_sync_maestro/plugins/bash_command.py
-import io
 import os
 import shlex
 import subprocess
 from typing import Any, Dict
 
 from ..core import BaseExecutor, register_plugin
-from ..utils.pretty_print import pretty_print_env
 
 
 @register_plugin("sh")
@@ -36,10 +34,6 @@ class BashCommandExecutor(BaseExecutor):
         env = os.environ.copy()
         env.update(self.context.get_accumulated_env())
         env.update(kwargs.get('envs', {}))
-
-        # output = io.StringIO()
-        # pretty_print_env(env, print_func=output.write, exclude_keys=["SECRET_KEY", "PASSWORD"])
-        # self.logger.debug(f"Current environment:\n{output.getvalue()}")
 
         # Add context variables to environment
         for key, value in self.context.get_root()._resources.items():
