@@ -14,8 +14,9 @@ class WorkflowContext(BaseContext):
 
 
 class WorkflowRunner:
-    def __init__(self, context: WorkflowContext):
+    def __init__(self, context: WorkflowContext, inputs: Dict[str, Any] = {}):
         self.context = context
+        self.inputs = inputs
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def load_plugins(self, plugins):
@@ -35,6 +36,7 @@ class WorkflowRunner:
 
     def run_steps(self, config: Dict[Any, Any]):
         steps = config.get("steps", [])
+        self.context.set_inputs(self.inputs)
         for index, action in enumerate(steps):
             with ContextManager(ActionContext(action, self.context)) as context:
                 action_name = action.get('name', f"Action-{index}")

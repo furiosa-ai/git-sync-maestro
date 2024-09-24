@@ -16,7 +16,6 @@ class ExecutorFactory:
             try:
                 plugin = plugin_class(self.context)
                 resolved_config = plugin.resolve_config(action_config)
-                self.context.set_action_args(resolved_config)
                 plugin.validate_config(resolved_config)
                 return plugin.run(**resolved_config)
             except Exception as e:

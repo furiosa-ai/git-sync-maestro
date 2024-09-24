@@ -14,3 +14,9 @@ class InvalidEnvironmentValueError(Exception):
         self.action_line = action_line
         self.original_error = original_error
         super().__init__(f"Error in {action_name} (line {action_line}): {str(original_error)}")
+
+
+class ActionExecutionError(Exception):
+    """Raised when an action execution fails."""
+
+    pass

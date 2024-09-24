@@ -13,7 +13,7 @@ class BaseContext:
         self._process_env_vars()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.parent = parent
-        self._action_args: Dict[str, Any] = {}
+        self._inputs: Optional[Dict[str, Any]] = None
         self.action_name: Optional[str] = None
         self.action_line: Optional[int] = None
         if parent is None:
@@ -87,17 +87,21 @@ class BaseContext:
         if single_resource_match:
             return self.get_resource(single_resource_match.group(1), value)
 
-        single_action_match = re.match(r'^\$\[action\.([^\]]+)\]$', value)
+        single_action_match = re.match(r'^\$\[inputs\.([^\]]+)\]$', value)
         if single_action_match:
             return self._action_args(single_resource_match.group(1), value)
 
         def resolve_var(match):
             var = match.group(1)
+            self.logger.debug(f"resolve_var={var}")
             if var.startswith('resources.'):
                 resource_value = self.get_resource(var[10:], match.group(0))
                 return self._value_to_string(resource_value)
-            elif var.startswith('action.'):
-                return str(self._action_args.get(var[7:], match.group(0)))
+            elif var.startswith('inputs.'):
+                inputs = self.get_inputs()
+                result = str(inputs.get(var[7:], match.group(0)))
+                self.logger.debug(f"inputs.vars={result} by {var[7:]}: {inputs}")
+                return result
             else:
                 return str(self.get_env(var, match.group(0)))
 
@@ -169,8 +173,15 @@ class BaseContext:
         root = self.get_root()
         root._resources[key] = value
 
-    def set_action_args(self, args: Dict[str, Any]):
-        self._action_args = args
+    def set_inputs(self, args: Dict[str, Any]):
+        self._inputs = args
+
+    def get_inputs(self) -> Dict[str, Any]:
+        if self._inputs is None:
+            if self.parent == None:
+                return {}
+            return self.parent.get_inputs()
+        return self._inputs
 
     def set_action_info(self, name: str, line: int):
         self.action_name = name
