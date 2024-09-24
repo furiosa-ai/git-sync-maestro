@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 def main(config_file):
     config = load_config(config_file)
 
-    with ContextManager(WorkflowContext(config)) as context:
-        workflow_runner = WorkflowRunner(context, inputs={})
+    with ContextManager(WorkflowContext(config, inputs={})) as context:
+        workflow_runner = WorkflowRunner.from_config(context, config)
         workflow_runner.run(config)
 
 

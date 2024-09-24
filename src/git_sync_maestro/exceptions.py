@@ -20,3 +20,9 @@ class ActionExecutionError(Exception):
     """Raised when an action execution fails."""
 
     pass
+
+
+class WorkflowValidationError(Exception):
+    """Raised when workflow validation fails."""
+
+    pass

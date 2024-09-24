@@ -1,23 +1,46 @@
 import importlib
 import logging
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from .core import BaseContext, ExecutorFactory
 from .core.action_context import ActionContext
-from .exceptions import ExecutionError
+from .exceptions import ExecutionError, WorkflowValidationError
 from .interface.context import ContextManager
 
 
 class WorkflowContext(BaseContext):
-    pass
+    def __init__(
+        self, config: Dict[str, Any], inputs: Dict[str, Any], parent: Optional['BaseContext'] = None
+    ):
+        super().__init__(config, parent)
+        self.inputs = inputs
 
 
 class WorkflowRunner:
-    def __init__(self, context: WorkflowContext, inputs: Dict[str, Any] = {}):
+    def __init__(self, context: WorkflowContext):
         self.context = context
-        self.inputs = inputs
         self.logger = logging.getLogger(self.__class__.__name__)
+
+    @staticmethod
+    def from_config(context, config: Dict[Any, Any]) -> 'WorkflowRunner':
+        WorkflowRunner.validate_inputs(config.get("inputs", []))
+        return WorkflowRunner(context)
+
+    @staticmethod
+    def validate_inputs(self, workflow_data: Dict[str, Any]):
+        required_inputs = workflow_data.get('inputs', [])
+        provided_inputs = self.context.get_resource('inputs', {})
+
+        missing_inputs = [
+            input_name for input_name in required_inputs if input_name not in provided_inputs
+        ]
+
+        if missing_inputs:
+            raise WorkflowValidationError(f"Missing required inputs: {', '.join(missing_inputs)}")
+
+        self.logger.info(f"Inputs validated successfully. Required inputs: {required_inputs}")
+        self.logger.debug(f"Provided inputs: {provided_inputs}")
 
     def load_plugins(self, plugins):
         for plugin in plugins:
@@ -31,6 +54,7 @@ class WorkflowRunner:
                 print(f"Error loading plugin {plugin}: {str(e)}")
 
     def run(self, config: Dict[Any, Any]):
+        self.validate_inputs()
         self.load_plugins(config.get('plugins', []))
         self.run_steps(config)
 
