@@ -62,7 +62,7 @@ To install Git Sync Maestro, follow these steps:
 2. Run the workflow using the command-line interface:
 
    ```
-   git-sync-maestro run my_workflow.yaml --input REPO_URL=https://github.com/example/repo.git --input BRANCH_NAME=main
+   git-sync-maestro run my_workflow.yaml --input REPO_URL=https://github.com/example/repo.git --input BRANCH_NAME=main --input VAR1="this is var1"
    ```
 
 ## Creating Custom Plugins

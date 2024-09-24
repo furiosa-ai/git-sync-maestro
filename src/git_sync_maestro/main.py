@@ -1,6 +1,7 @@
+# src/git_sync_maestro/main.py
+
 import argparse
 import logging
-import sys
 
 from .interface.context import ContextManager
 from .utils.yaml_loader import load_config
@@ -10,14 +11,21 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 
+def parse_input(s):
+    if '=' in s:
+        key, value = s.split('=', 1)
+        return key, value
+    else:
+        raise argparse.ArgumentTypeError('Input must be in the format KEY=VALUE')
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Git Sync Maestro Workflow Runner")
     parser.add_argument("config_file", help="Path to the workflow configuration file")
     parser.add_argument(
         "--input",
         action="append",
-        nargs=2,
-        metavar=("KEY", "VALUE"),
+        type=parse_input,
         help="Input key-value pairs for the workflow. Can be used multiple times.",
     )
     return parser.parse_args()
