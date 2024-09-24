@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 
@@ -9,11 +10,27 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 
-def main(config_file):
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Git Sync Maestro Workflow Runner")
+    parser.add_argument("config_file", help="Path to the workflow configuration file")
+    parser.add_argument(
+        "--input",
+        action="append",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        help="Input key-value pairs for the workflow. Can be used multiple times.",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    config_file = args.config_file
     logger.info(f"Start Workflow: [{config_file}]")
     config = load_config(config_file)
+    input_dict = dict(args.input or [])
 
-    with ContextManager(WorkflowContext(config, inputs={})) as context:
+    with ContextManager(WorkflowContext(config, inputs=input_dict)) as context:
         workflow_runner = WorkflowRunner.from_config(context, config)
         workflow_runner.run(config)
 
@@ -21,9 +38,4 @@ def main(config_file):
 
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 2:
-        print("Usage: python main.py <config_file>")
-        sys.exit(1)
-    main(sys.argv[1])
+    main()
