@@ -10,11 +10,14 @@ logger = logging.getLogger(__name__)
 
 
 def main(config_file):
+    logger.info(f"Start Workflow: [{config_file}]")
     config = load_config(config_file)
 
     with ContextManager(WorkflowContext(config, inputs={})) as context:
         workflow_runner = WorkflowRunner.from_config(context, config)
         workflow_runner.run(config)
+
+    logger.info(f"Finished Workflow: [{config_file}]")
 
 
 if __name__ == "__main__":

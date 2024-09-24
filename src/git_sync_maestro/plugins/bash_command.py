@@ -46,7 +46,7 @@ class BashCommandExecutor(BaseExecutor):
             if isinstance(value, dict) and 'path' in value:
                 env[f"CONTEXT_{key.upper()}_PATH"] = value['path']
 
-        self.logger.info(f"Executing command: {command}")
+        self.logger.info(f"Evaluated Executing command: {command}")
         self.logger.info(f"Working directory: {working_dir}")
         self.logger.info(f"Using shell: {shell}")
 
@@ -69,7 +69,7 @@ class BashCommandExecutor(BaseExecutor):
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
             )
-            self.logger.debug("Command output:")
+            self.logger.debug(f"Command output(with exitcode: {result.returncode}):")
             self.logger.debug(result.stdout)
             if result.stderr:
                 self.logger.warning("Command error output:")

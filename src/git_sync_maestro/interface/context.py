@@ -83,11 +83,11 @@ class BaseContext:
         old_value = value
 
         # Check if the entire string is a single resource variable
-        single_resource_match = re.match(r'^\$\{\{resources\.([^\]]+)\}\}$', value)
+        single_resource_match = re.match(r'^\$\{\{resources\.([^\}]+)\}\}$', value)
         if single_resource_match:
             return self.get_resource(single_resource_match.group(1), value)
 
-        single_action_match = re.match(r'^\$\{\{inputs\.([^\]]+)\}\}$', value)
+        single_action_match = re.match(r'^\$\{\{inputs\.([^\}]+)\}\}$', value)
         if single_action_match:
             return self.get_inputs().get(single_resource_match.group(1), value)
 
@@ -105,7 +105,7 @@ class BaseContext:
                 return str(self.get_env(var, match.group(0)))
 
         # Resolve all variables in the string
-        resolved_value = re.sub(r'\$\{\{([^\]]+)\}\}', resolve_var, value)
+        resolved_value = re.sub(r'\$\{\{([^\}]+)\}\}', resolve_var, value)
 
         if resolved_value != old_value:
             self.logger.debug(f"Resolved string: '{old_value}' => '{resolved_value}'")
