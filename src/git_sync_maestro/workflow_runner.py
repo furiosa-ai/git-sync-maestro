@@ -36,14 +36,14 @@ class WorkflowRunner:
     def run_steps(self, config: Dict[Any, Any]):
         steps = config.get("steps", [])
         for index, action in enumerate(steps):
-            action_name = action.get('name', f"Action-{index}")
-            action_line = action.get('__line__', 'Unknown')
-
             with ContextManager(ActionContext(action, self.context)) as context:
+                action_name = action.get('name', f"Action-{index}")
+                action_line = action.get('__line__', 'Unknown')
+                context.set_action_info(action_name, action_line)
 
                 print(f"Executing step: {action_name}@{action_line}")
                 action_type = self._determine_action_type(action)
-                executor = ExecutorFactory(self.context)
+                executor = ExecutorFactory(context)
                 try:
                     result = executor(action_type, action)
                     self.logger.info(f"Completed {action_name} (line {action_line})")

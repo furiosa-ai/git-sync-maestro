@@ -35,7 +35,7 @@ class BashCommandExecutor(BaseExecutor):
         env = os.environ.copy()
 
         # Add context variables to environment
-        for key, value in self.context._resources.items():
+        for key, value in self.context.get_root()._resources.items():
             if isinstance(value, dict) and 'path' in value:
                 env[f"CONTEXT_{key.upper()}_PATH"] = value['path']
 
