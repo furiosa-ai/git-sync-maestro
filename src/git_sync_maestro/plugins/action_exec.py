@@ -30,9 +30,11 @@ class ActionExecutor(BaseExecutor):
         try:
             # Create a new context for this workflow execution
             config = load_config(workflow_path)
-            with ContextManager(WorkflowContext(config, self.context)) as context:
+            with ContextManager(
+                WorkflowContext(config, inputs=inputs, parent=self.context)
+            ) as context:
                 # Create a new WorkflowRunner with the workflow context
-                runner = WorkflowRunner(context, inputs=inputs)
+                runner = WorkflowRunner.from_config(context, config)
 
                 # Run the workflow
                 result = runner.run(config)

@@ -89,7 +89,7 @@ class BaseContext:
 
         single_action_match = re.match(r'^\$\[inputs\.([^\]]+)\]$', value)
         if single_action_match:
-            return self._action_args(single_resource_match.group(1), value)
+            return self.get_inputs().get(single_resource_match.group(1), value)
 
         def resolve_var(match):
             var = match.group(1)
