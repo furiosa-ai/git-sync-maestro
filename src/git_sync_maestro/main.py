@@ -15,7 +15,7 @@ class LineNumberLoader(SafeLoader):
     def construct_mapping(self, node, deep=False):
         mapping = super().construct_mapping(node, deep=deep)
         # Add 1 to line number because line numbers start at 0
-        mapping['__line__'] = node.start_mark.line + 1
+        mapping['__line__'] = str(node.start_mark.line + 1)
         return mapping
 
 

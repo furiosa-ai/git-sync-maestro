@@ -31,6 +31,8 @@ class PythonExecutor(BaseExecutor):
         working_dir = kwargs.get('working_dir', os.getcwd())
 
         env = os.environ.copy()
+        env.update(self.context.get_accumulated_env())
+        env.update(kwargs.get('envs', {}))
 
         # Add context variables to environment
         for key, value in self.context.get_root()._resources.items():

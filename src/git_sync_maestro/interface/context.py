@@ -3,6 +3,8 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
+from ..exceptions import InvalidEnvironmentValueError
+
 
 class BaseContext:
     def __init__(self, config: Dict[str, Any], parent: Optional['BaseContext'] = None):
@@ -136,6 +138,28 @@ class BaseContext:
         if value is None and self.parent:
             return self.parent.get_env(key, default)
         return value if value is not None else default
+
+    def get_accumulated_env(self) -> Dict[str, str]:
+        """
+        Returns the accumulated environment variables from all parent contexts and the current context.
+        The variables from child contexts override those from parent contexts.
+        """
+        if self.parent is None:
+            accumulated_env = self._env.copy()
+        else:
+            accumulated_env = self.parent.get_accumulated_env()
+            accumulated_env.update(self._env)
+
+        # Check if all values are strings
+        for key, value in accumulated_env.items():
+            if not isinstance(value, str):
+                raise InvalidEnvironmentValueError(
+                    self.action_name,
+                    self.action_line,
+                    f"Environment variable '{key}' has a non-string value: {value}",
+                )
+
+        return accumulated_env
 
     def get_resource(self, key: str, default: Any = None) -> Any:
         root = self.get_root()
