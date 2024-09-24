@@ -4,7 +4,7 @@ from typing import Dict
 
 from git import Repo
 
-from .directory_sync import sync_directory
+from .dir_sync import sync_directory
 from .file_sync import sync_file
 
 

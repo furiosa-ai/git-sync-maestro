@@ -1,4 +1,4 @@
-class PluginExecutionError(Exception):
+class ExecutionError(Exception):
     def __init__(self, action_name: str, action_line: int, original_error: Exception):
         self.action_name = action_name
         self.action_line = action_line

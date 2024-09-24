@@ -1,11 +1,11 @@
 from typing import Any, Dict
 
-from ..exceptions import PluginExecutionError
+from ..exceptions import ExecutionError
 from ..interface.context import BaseContext
 from .register_plugin import PluginRegistry
 
 
-class PluginExecutor:
+class ExecutorFactory:
     def __init__(self, context: BaseContext):
         self.context = context
 
@@ -20,8 +20,8 @@ class PluginExecutor:
                 plugin.validate_config(resolved_config)
                 return plugin.run(**resolved_config)
             except Exception as e:
-                raise PluginExecutionError(action_name, action_line, e)
+                raise ExecutionError(action_name, action_line, e)
         else:
-            raise PluginExecutionError(
+            raise ExecutionError(
                 action_name, action_line, ValueError(f"Plugin '{action_type}' not found")
             )

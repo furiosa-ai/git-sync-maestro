@@ -1,13 +1,13 @@
 from typing import Dict, Type
 
-from ..interface.base_plugin import BasePlugin
+from ..interface.base_executor import BaseExecutor
 
 
 class PluginRegistry:
-    _plugins: Dict[str, Type[BasePlugin]] = {}
+    _plugins: Dict[str, Type[BaseExecutor]] = {}
 
     @classmethod
-    def register(cls, name: str, plugin: Type[BasePlugin]):
+    def register(cls, name: str, plugin: Type[BaseExecutor]):
         """
         Register a plugin with the given name.
 
@@ -20,7 +20,7 @@ class PluginRegistry:
         cls._plugins[name] = plugin
 
     @classmethod
-    def get(cls, name: str) -> Type[BasePlugin]:
+    def get(cls, name: str) -> Type[BaseExecutor]:
         """
         Get a plugin by name.
 
@@ -33,7 +33,7 @@ class PluginRegistry:
         return cls._plugins[name]
 
     @classmethod
-    def list(cls) -> Dict[str, Type[BasePlugin]]:
+    def list(cls) -> Dict[str, Type[BaseExecutor]]:
         """
         Get a dictionary of all registered plugins.
 
@@ -44,7 +44,7 @@ class PluginRegistry:
 
 def register_plugin(name: str):
     def decorator(cls):
-        if not issubclass(cls, BasePlugin):
+        if not issubclass(cls, BaseExecutor):
             raise TypeError(f"Plugin class {cls.__name__} must inherit from BasePlugin")
         PluginRegistry.register(name, cls)
         return cls
