@@ -51,12 +51,12 @@ class WorkflowRunner:
         for plugin in plugins:
             try:
                 module_name, class_name = plugin.rsplit('.', 1)
-                print(f"load plugin: from {module_name} import {class_name}")
+                self.logger.debug(f"load plugin: from {module_name} import {class_name}")
                 module = importlib.import_module(module_name)
 
                 getattr(module, class_name)  # This will trigger the decorator
             except (ImportError, AttributeError) as e:
-                print(f"Error loading plugin {plugin}: {str(e)}")
+                self.logger.error(f"Error loading plugin {plugin}: {str(e)}")
 
     def run(self, config: Dict[Any, Any]):
         self.load_plugins(config.get('plugins', []))
@@ -70,7 +70,7 @@ class WorkflowRunner:
                 action_line = action.get('__line__', 'Unknown')
                 context.set_action_info(action_name, action_line)
 
-                print(f"Executing step: {action_name}@{action_line}")
+                self.logger.info(f"Executing step: {action_name}@{action_line}")
                 action_type = self._determine_action_type(action)
                 executor = ExecutorFactory(context)
                 try:
