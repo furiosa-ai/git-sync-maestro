@@ -3,13 +3,21 @@ import subprocess
 from typing import List
 
 DEFAULT_EXCLUDE_PATTERNS = [
-    ".git",
-    ".git/**",
-    "__pycache__",
-    "*.pyc",
-    "*.pyo",
+    ".git/",
     "*.swp",
+    "*.swo",
+    "*~",
     ".DS_Store",
+    "/build/",
+    "/dist/",
+    "*.pyc",
+    "__pycache__/",
+    "/node_modules/",
+    "/vendor/",
+    "*.log",
+    ".env",
+    ".env.*",
+    "config.ini",
 ]
 
 
