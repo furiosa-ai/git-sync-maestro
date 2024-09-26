@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "git-sync-maestro"
+version = "0.0.1"
+description = "A tool for synchronizing multiple Git repositories"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+keywords = ["git", "sync", "repository"]
+authors = [
+  { name = "Furiosa.AI", email = "hyeokjune.jeon@furiosa.ai" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "gitpython>=3.1.0",
+  "pyyaml>=5.3.1",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=6.0",
+  "pytest-cov>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/furiosa-ai/git-sync-maestro"
+Documentation = "https://github.com/furiosa-ai/git-sync-maestro#readme"
+Issues = "https://github.com/furiosa-ai/git-sync-maestro/issues"
+Source = "https://github.com/furiosa-ai/git-sync-maestro"
+
+[tool.hatch.version]
+path = "src/git_sync_maestro/__init__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=git_sync_maestro --cov=tests {args}"
+no-cov = "cov --no-cov {args}"
+
+[[tool.hatch.envs.test.matrix]]
+python = ["37", "38", "39", "310", "311"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "src/git_sync_maestro/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "pragma: no cover",
+]
